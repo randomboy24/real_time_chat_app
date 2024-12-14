@@ -1,3 +1,4 @@
+import { RoomContext } from "@/app/context.";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,12 +11,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dispatch, SetStateAction, useContext } from "react";
 
 export enum proptype {
   create,
   join,
 }
-export function DialogDemo({ type }: { type: proptype }) {
+export function DialogDemo({
+  type,
+  setInRoom,
+}: {
+  type: proptype;
+  setInRoom: Dispatch<SetStateAction<boolean>>;
+}) {
+  const { roomName, setRoomName } = useContext(RoomContext);
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -36,8 +45,37 @@ export function DialogDemo({ type }: { type: proptype }) {
         <form
           className="grid gap-4 py-4"
           onSubmit={(event) => {
-            event.preventDefault(); // Prevent default reload
-            console.log("You have successfully submitted the form.");
+            event.preventDefault(); // Prevent default reloads
+            if (type === proptype.create) {
+              const token = localStorage.getItem("token");
+              fetch("http://localhost:3001/room", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  authorization: token as string,
+                },
+                body: JSON.stringify({ roomName: roomName }),
+              })
+                .then((res) => res.json())
+                .then((data) => {
+                  setRoomName(data.roomName);
+                  setInRoom(true);
+                });
+              console.log("You have successfully submitted the form.");
+            } else {
+              fetch(`http://localhost:3001/room/${roomName}`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  authorization: localStorage.getItem("token") as string,
+                },
+              })
+                .then((res) => res.json())
+                .then((data) => {
+                  console.log(data);
+                  setInRoom(true);
+                });
+            }
           }}
         >
           <div className="grid grid-cols-4 items-center gap-4">
@@ -45,9 +83,14 @@ export function DialogDemo({ type }: { type: proptype }) {
               Room Name
             </Label>
             <Input
+              onChange={(e) => {
+                setRoomName(e.target.value);
+              }}
               id="name"
               className="col-span-3"
               placeholder="Enter room name"
+              required
+              maxLength={20}
             />
           </div>
           <DialogFooter>

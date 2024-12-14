@@ -67,7 +67,7 @@ const DialogHeader = ({
 )
 DialogHeader.displayName = "DialogHeader"
 
-const DialogFooter = ({
+const   DialogFooter = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
